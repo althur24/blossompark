@@ -403,28 +403,48 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   // 12. FORM VALIDATION & SUBMISSION
   // ==============================
+
+  // --- Utility: Toast Notification ---
+  function showFormToast(message) {
+    const existing = document.querySelector('.form-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'form-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('show'));
+
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+  }
+
+  // --- Utility: Validate Form ---
   function validateForm(form) {
     let isValid = true;
     const nameInput = form.querySelector('input[name="name"]');
     const whatsappInput = form.querySelector('input[name="whatsapp"]');
     const unitSelect = form.querySelector('select[name="unit"]');
 
-    // Reset errors
-    form.querySelectorAll('.form-group').forEach((g) => g.classList.remove('error'));
+    // Reset all errors first
+    form.querySelectorAll('.form-group').forEach(g => g.classList.remove('error'));
 
-    // Validate name (minimum 2 characters)
+    // Validate name (min 2 chars)
     if (nameInput && (!nameInput.value.trim() || nameInput.value.trim().length < 2)) {
       nameInput.closest('.form-group').classList.add('error');
       isValid = false;
     }
-    
-    // Validate select
-    if (unitSelect && (!unitSelect.value || unitSelect.value === "")) {
+
+    // Validate select (must have chosen an option)
+    if (unitSelect && (!unitSelect.value || unitSelect.value === '')) {
       unitSelect.closest('.form-group').classList.add('error');
       isValid = false;
     }
 
-    // Validate WhatsApp (Indonesian phone: starts with 0/+62/62, 10-15 digits total)
+    // Validate WhatsApp (Indonesian phone format)
     if (whatsappInput) {
       const waValue = whatsappInput.value.trim();
       const digits = waValue.replace(/\D/g, '');
@@ -439,88 +459,90 @@ document.addEventListener('DOMContentLoaded', () => {
     return isValid;
   }
 
-  function handleFormSubmit(form, successEl) {
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
+  // --- Utility: Show Validation Errors ---
+  function showValidationFeedback(form) {
+    showFormToast('⚠️ Mohon lengkapi semua data sebelum mengirim form.');
 
-      if (!validateForm(form)) {
-        alert("Mohon lengkapi semua data (Nama, Tipe Rumah, dan Nomor WhatsApp yang valid) sebelum mengirim form.");
-        return;
-      }
-
-      // Hide form, show success
-      form.style.display = 'none';
-      successEl.classList.add('show');
-
-      // Reset form after delay
-      setTimeout(() => {
-        form.reset();
-        form.querySelectorAll('.form-group').forEach((g) => g.classList.remove('error'));
-      }, 1000);
+    // Shake error fields
+    form.querySelectorAll('.form-group.error').forEach(group => {
+      group.classList.add('shake');
+      setTimeout(() => group.classList.remove('shake'), 600);
     });
+
+    // Scroll to first error
+    const firstError = form.querySelector('.form-group.error');
+    if (firstError) {
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 
-  // Hero form
-  const heroForm = document.getElementById('heroLeadForm');
-  const heroSuccess = document.getElementById('heroFormSuccess');
-  if (heroForm && heroSuccess) {
-    handleFormSubmit(heroForm, heroSuccess);
-  }
-
-  // CTA form with WA redirect & Pixel
+  // --- CTA Form (WhatsApp Redirect) ---
   const ctaForm = document.getElementById('ctaLeadForm');
   const ctaSuccess = document.getElementById('ctaFormSuccess');
-  
-  if (ctaForm && ctaSuccess) {
-    const ctaSubmitBtn = document.getElementById('ctaSubmitBtn');
-    
-    // Use click instead of submit to avoid native browser validation conflicts
-    ctaSubmitBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      
+  const ctaSubmitBtn = document.getElementById('ctaSubmitBtn');
+
+  if (ctaForm && ctaSubmitBtn) {
+    ctaSubmitBtn.addEventListener('click', () => {
+
+      // Step 1: Validate
       if (!validateForm(ctaForm)) {
-        alert("Mohon lengkapi semua data (Nama, Tipe Rumah, dan Nomor WhatsApp yang valid) sebelum mengirim form.");
+        showValidationFeedback(ctaForm);
         return;
       }
-      
+
+      // Step 2: Loading state
       const originalText = ctaSubmitBtn.innerHTML;
-      
-      // Setup Loading State
+      ctaSubmitBtn.disabled = true;
       ctaSubmitBtn.classList.add('loading');
-      ctaSubmitBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Memproses permintaan Anda...</span>';
-      
-      // 1. Fire Pixel (Dummy)
+      ctaSubmitBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg> <span>Memproses...</span>';
+
+      // Step 3: Fire Pixel (if exists)
       if (typeof fbq === 'function') {
         fbq('track', 'Lead');
       }
-      
-      // 2. Prepare WA URL
-      const adminWA = "6281234567890"; // DUMMY NUMBER
+
+      // Step 4: Build WhatsApp URL
+      const adminWA = '6281234567890'; // GANTI DENGAN NOMOR ADMIN ASLI
       const name = ctaForm.querySelector('input[name="name"]').value.trim();
       const unit = ctaForm.querySelector('select[name="unit"]').value;
-      const message = `Halo Admin Blossom Park Residence 🏡\n\nPerkenalkan, saya *${name}*.\nSaya tertarik untuk mendapatkan informasi lengkap mengenai rumah *Tipe ${unit}* di Blossom Park Residence.\n\nMohon bantuannya untuk:\n✅ Pricelist terbaru\n✅ Jadwal survey lokasi\n✅ Info promo yang sedang berlaku\n\nTerima kasih 🙏`;
-      
-      const waURL = `https://wa.me/${adminWA}?text=${encodeURIComponent(message)}`;
-      
-      // 3. Delay & Redirect
+      const message = 'Halo Admin Blossom Park Residence 🏡\n\n'
+        + 'Perkenalkan, saya *' + name + '*.\n'
+        + 'Saya tertarik untuk mendapatkan informasi lengkap mengenai rumah *Tipe ' + unit + '* di Blossom Park Residence.\n\n'
+        + 'Mohon bantuannya untuk:\n'
+        + '✅ Pricelist terbaru\n'
+        + '✅ Jadwal survey lokasi\n'
+        + '✅ Info promo yang sedang berlaku\n\n'
+        + 'Terima kasih 🙏';
+
+      const waURL = 'https://wa.me/' + adminWA + '?text=' + encodeURIComponent(message);
+
+      // Step 5: Delay then redirect
       setTimeout(() => {
-        ctaForm.style.display = 'none';
-        ctaSuccess.classList.add('show');
-        window.location.href = waURL;
+        // Show success state (visible when user returns)
+        if (ctaSuccess) {
+          ctaForm.style.display = 'none';
+          ctaSuccess.classList.add('show');
+        }
+
+        // Redirect to WhatsApp
+        window.open(waURL, '_blank');
+
+        // Reset button
+        ctaSubmitBtn.disabled = false;
         ctaSubmitBtn.classList.remove('loading');
         ctaSubmitBtn.innerHTML = originalText;
       }, 1500);
     });
   }
 
-  // Real-time validation on input
-  document.querySelectorAll('.lead-form input').forEach((input) => {
+  // --- Real-time: Clear errors on input ---
+  document.querySelectorAll('.lead-form input').forEach(input => {
     input.addEventListener('input', () => {
       input.closest('.form-group').classList.remove('error');
     });
   });
 
-  document.querySelectorAll('.lead-form select').forEach((select) => {
+  document.querySelectorAll('.lead-form select').forEach(select => {
     select.addEventListener('change', () => {
       select.closest('.form-group').classList.remove('error');
     });
