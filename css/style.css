@@ -814,31 +814,6 @@ input {
   40%, 60% { transform: translateX(4px); }
 }
 
-/* Custom Toast Notification */
-.form-toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  background: rgba(40, 40, 40, 0.95);
-  color: #fff;
-  padding: 14px 28px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  z-index: 999999;
-  opacity: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  border: 1px solid rgba(255, 107, 107, 0.3);
-}
-
-.form-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -2329,11 +2304,12 @@ input {
 }
 
 .btn-whatsapp.loading {
-  background: #e0e0e0;
-  color: #999;
-  box-shadow: none;
-  cursor: not-allowed;
+  background: #1EBE59;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.3);
+  cursor: wait;
   pointer-events: none;
+  animation: btnPulse 1.2s ease-in-out infinite;
 }
 
 .btn-whatsapp.loading svg {
@@ -2342,6 +2318,11 @@ input {
 
 @keyframes spin {
   100% { transform: rotate(360deg); }
+}
+
+@keyframes btnPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 
@@ -2574,21 +2555,7 @@ input {
   box-shadow: 0 12px 32px rgba(37, 211, 102, 0.4);
 }
 
-.btn-whatsapp.loading {
-  background: rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.6);
-  box-shadow: none;
-  cursor: not-allowed;
-  pointer-events: none;
-}
 
-.btn-whatsapp.loading svg {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  100% { transform: rotate(360deg); }
-}
 
 
   .footer-content {
@@ -3197,21 +3164,7 @@ input {
   box-shadow: 0 12px 32px rgba(37, 211, 102, 0.4);
 }
 
-.btn-whatsapp.loading {
-  background: rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.6);
-  box-shadow: none;
-  cursor: not-allowed;
-  pointer-events: none;
-}
 
-.btn-whatsapp.loading svg {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  100% { transform: rotate(360deg); }
-}
 
 
   /* --- Footer Mobile --- */

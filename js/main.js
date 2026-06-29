@@ -346,83 +346,77 @@ document.addEventListener('DOMContentLoaded', () => {
   const lightboxNext = document.getElementById('lightboxNext');
   let currentGalleryIndex = 0;
 
-  const galleryImages = Array.from(galleryItems).map((item) => ({
-    src: item.querySelector('img').src,
-    caption: item.getAttribute('data-caption'),
-  }));
+  if (lightbox && lightboxImg && lightboxClose && lightboxPrev && lightboxNext) {
+    const galleryImages = Array.from(galleryItems).map((item) => ({
+      src: item.querySelector('img').src,
+      caption: item.getAttribute('data-caption'),
+    }));
 
-  function openLightbox(index) {
-    currentGalleryIndex = index;
-    lightboxImg.src = galleryImages[index].src;
-    lightboxCaption.textContent = galleryImages[index].caption;
-    lightbox.style.display = 'flex';
-    // Trigger reflow for CSS transition
-    void lightbox.offsetWidth;
-    lightbox.classList.add('show');
-    document.body.style.overflow = 'hidden';
+    function openLightbox(index) {
+      currentGalleryIndex = index;
+      lightboxImg.src = galleryImages[index].src;
+      lightboxCaption.textContent = galleryImages[index].caption;
+      lightbox.style.display = 'flex';
+      void lightbox.offsetWidth;
+      lightbox.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('show');
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        if (!lightbox.classList.contains('show')) {
+          lightbox.style.display = 'none';
+        }
+      }, 300);
+    }
+
+    function navigateLightbox(direction) {
+      currentGalleryIndex =
+        (currentGalleryIndex + direction + galleryImages.length) % galleryImages.length;
+      lightboxImg.src = galleryImages[currentGalleryIndex].src;
+      lightboxCaption.textContent = galleryImages[currentGalleryIndex].caption;
+    }
+
+    galleryItems.forEach((item, index) => {
+      item.addEventListener('click', () => openLightbox(index));
+    });
+
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightboxPrev.addEventListener('click', () => navigateLightbox(-1));
+    lightboxNext.addEventListener('click', () => navigateLightbox(1));
+
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!lightbox.classList.contains('show')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') navigateLightbox(-1);
+      if (e.key === 'ArrowRight') navigateLightbox(1);
+    });
   }
-
-  function closeLightbox() {
-    lightbox.classList.remove('show');
-    document.body.style.overflow = '';
-    // Wait for fade-out transition before hiding
-    setTimeout(() => {
-      if (!lightbox.classList.contains('show')) {
-        lightbox.style.display = 'none';
-      }
-    }, 300);
-  }
-
-  function navigateLightbox(direction) {
-    currentGalleryIndex =
-      (currentGalleryIndex + direction + galleryImages.length) % galleryImages.length;
-    lightboxImg.src = galleryImages[currentGalleryIndex].src;
-    lightboxCaption.textContent = galleryImages[currentGalleryIndex].caption;
-  }
-
-  galleryItems.forEach((item, index) => {
-    item.addEventListener('click', () => openLightbox(index));
-  });
-
-  lightboxClose.addEventListener('click', closeLightbox);
-  lightboxPrev.addEventListener('click', () => navigateLightbox(-1));
-  lightboxNext.addEventListener('click', () => navigateLightbox(1));
-
-  lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) closeLightbox();
-  });
-
-  // Keyboard navigation
-  document.addEventListener('keydown', (e) => {
-    if (!lightbox.classList.contains('show')) return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowLeft') navigateLightbox(-1);
-    if (e.key === 'ArrowRight') navigateLightbox(1);
-  });
 
   // ==============================
   // 12. FORM VALIDATION & SUBMISSION
   // ==============================
 
-  // --- Utility: Toast Notification ---
-  function showFormToast(message) {
-    const existing = document.querySelector('.form-toast');
-    if (existing) existing.remove();
+  // --- Utility: Show Validation Errors ---
+  function showValidationFeedback(form) {
+    // Shake error fields
+    form.querySelectorAll('.form-group.error').forEach(group => {
+      group.classList.add('shake');
+      setTimeout(() => group.classList.remove('shake'), 600);
+    });
 
-    const toast = document.createElement('div');
-    toast.className = 'form-toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    requestAnimationFrame(() => toast.classList.add('show'));
-
-    setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.remove(), 400);
-    }, 4000);
+    // Scroll to first error
+    const firstError = form.querySelector('.form-group.error');
+    if (firstError) {
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
-
-  // --- Utility: Validate Form ---
   function validateForm(form) {
     let isValid = true;
     const nameInput = form.querySelector('input[name="name"]');
@@ -459,30 +453,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return isValid;
   }
 
-  // --- Utility: Show Validation Errors ---
-  function showValidationFeedback(form) {
-    showFormToast('⚠️ Mohon lengkapi semua data sebelum mengirim form.');
-
-    // Shake error fields
-    form.querySelectorAll('.form-group.error').forEach(group => {
-      group.classList.add('shake');
-      setTimeout(() => group.classList.remove('shake'), 600);
-    });
-
-    // Scroll to first error
-    const firstError = form.querySelector('.form-group.error');
-    if (firstError) {
-      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }
-
   // --- CTA Form (WhatsApp Redirect) ---
   const ctaForm = document.getElementById('ctaLeadForm');
   const ctaSuccess = document.getElementById('ctaFormSuccess');
   const ctaSubmitBtn = document.getElementById('ctaSubmitBtn');
 
   if (ctaForm && ctaSubmitBtn) {
-    ctaSubmitBtn.addEventListener('click', () => {
+    ctaSubmitBtn.addEventListener('click', function() {
 
       // Step 1: Validate
       if (!validateForm(ctaForm)) {
@@ -494,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const originalText = ctaSubmitBtn.innerHTML;
       ctaSubmitBtn.disabled = true;
       ctaSubmitBtn.classList.add('loading');
-      ctaSubmitBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg> <span>Memproses...</span>';
+      ctaSubmitBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg> <span>Mengirim ke WhatsApp...</span>';
 
       // Step 3: Fire Pixel (if exists)
       if (typeof fbq === 'function') {
@@ -505,33 +482,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const adminWA = '6281234567890'; // GANTI DENGAN NOMOR ADMIN ASLI
       const name = ctaForm.querySelector('input[name="name"]').value.trim();
       const unit = ctaForm.querySelector('select[name="unit"]').value;
-      const message = 'Halo Admin Blossom Park Residence 🏡\n\n'
-        + 'Perkenalkan, saya *' + name + '*.\n'
-        + 'Saya tertarik untuk mendapatkan informasi lengkap mengenai rumah *Tipe ' + unit + '* di Blossom Park Residence.\n\n'
-        + 'Mohon bantuannya untuk:\n'
-        + '✅ Pricelist terbaru\n'
-        + '✅ Jadwal survey lokasi\n'
-        + '✅ Info promo yang sedang berlaku\n\n'
-        + 'Terima kasih 🙏';
+      const message = 'Halo Admin Blossom Park Residence, Perkenalkan, saya *' + name + '*. Saya tertarik untuk mendapatkan informasi lengkap mengenai rumah *Tipe ' + unit + '* di Blossom Park Residence.';
 
       const waURL = 'https://wa.me/' + adminWA + '?text=' + encodeURIComponent(message);
 
       // Step 5: Delay then redirect
-      setTimeout(() => {
-        // Show success state (visible when user returns)
-        if (ctaSuccess) {
-          ctaForm.style.display = 'none';
-          ctaSuccess.classList.add('show');
-        }
+      setTimeout(function() {
+        // Gunakan window.location.href agar 100% lolos popup blocker di Mobile (iOS/Android)
+        window.location.href = waURL;
 
-        // Redirect to WhatsApp
-        window.open(waURL, '_blank');
-
-        // Reset button
-        ctaSubmitBtn.disabled = false;
+        // Change button to "sent" state permanently
         ctaSubmitBtn.classList.remove('loading');
-        ctaSubmitBtn.innerHTML = originalText;
-      }, 1500);
+        ctaSubmitBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> <span>Terkirim ✓</span>';
+        ctaSubmitBtn.style.background = '#888';
+        ctaSubmitBtn.style.cursor = 'not-allowed';
+        // Button stays disabled - no double submit
+      }, 2500);
     });
   }
 
@@ -554,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const backToTop = document.getElementById('backToTop');
 
   function handleBackToTop() {
+    if (!backToTop) return;
     if (window.scrollY > 600) {
       backToTop.classList.add('show');
     } else {
@@ -561,9 +528,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
+  if (backToTop) {
+    backToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 
   // ==============================
   // 14. PARALLAX HERO
