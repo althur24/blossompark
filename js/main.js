@@ -467,59 +467,15 @@ document.addEventListener('DOMContentLoaded', () => {
     handleFormSubmit(heroForm, heroSuccess);
   }
 
-
-  // Custom Select Logic
-  const unitSelectWrapper = document.getElementById('unitSelectWrapper');
-  if (unitSelectWrapper) {
-    const trigger = document.getElementById('unitSelectTrigger');
-    const triggerText = trigger.querySelector('.trigger-text');
-    const options = unitSelectWrapper.querySelectorAll('.custom-option');
-    const hiddenSelect = document.getElementById('ctaUnit');
-
-    // Toggle dropdown
-    trigger.addEventListener('click', () => {
-      unitSelectWrapper.classList.toggle('open');
-    });
-
-    // Close when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!unitSelectWrapper.contains(e.target)) {
-        unitSelectWrapper.classList.remove('open');
-      }
-    });
-
-    // Handle option selection
-    options.forEach(option => {
-      option.addEventListener('click', () => {
-        // Remove selected class from all
-        options.forEach(opt => opt.classList.remove('selected'));
-        // Add to current
-        option.classList.add('selected');
-        
-        // Update trigger text and style
-        const name = option.querySelector('.option-name').textContent;
-        triggerText.textContent = name;
-        trigger.classList.add('selected');
-        
-        // Update hidden select
-        const value = option.getAttribute('data-value');
-        hiddenSelect.value = value;
-        
-        // Trigger change event for validation
-        hiddenSelect.dispatchEvent(new Event('change'));
-        
-        // Close dropdown
-        unitSelectWrapper.classList.remove('open');
-      });
-    });
-  }
-
   // CTA form with WA redirect & Pixel
   const ctaForm = document.getElementById('ctaLeadForm');
   const ctaSuccess = document.getElementById('ctaFormSuccess');
   
   if (ctaForm && ctaSuccess) {
-    ctaForm.addEventListener('submit', (e) => {
+    const ctaSubmitBtn = document.getElementById('ctaSubmitBtn');
+    
+    // Use click instead of submit to avoid native browser validation conflicts
+    ctaSubmitBtn.addEventListener('click', (e) => {
       e.preventDefault();
       
       if (!validateForm(ctaForm)) {
@@ -527,39 +483,33 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       
-      const btn = ctaForm.querySelector('button[type="submit"]');
-      const originalText = btn.innerHTML;
-        
-        // Setup Loading State
-        btn.classList.add('loading');
-        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Memproses permintaan Anda...</span>';
-        
-        // 1. Fire Pixel (Dummy)
-        if (typeof fbq === 'function') {
-          fbq('track', 'Lead');
-        }
-        
-        // 2. Prepare WA URL
-        const adminWA = "6281234567890"; // DUMMY NUMBER
-        const name = ctaForm.querySelector('input[name="name"]').value.trim();
-        const unit = ctaForm.querySelector('select[name="unit"]').value;
-        const message = `Halo Admin Blossom Park Residence 🏡\n\nPerkenalkan, saya *${name}*.\nSaya tertarik untuk mendapatkan informasi lengkap mengenai rumah *Tipe ${unit}* di Blossom Park Residence.\n\nMohon bantuannya untuk:\n✅ Pricelist terbaru\n✅ Jadwal survey lokasi\n✅ Info promo yang sedang berlaku\n\nTerima kasih 🙏`;
-        
-        const waURL = `https://wa.me/${adminWA}?text=${encodeURIComponent(message)}`;
-        
-        // 3. Delay & Redirect
-        setTimeout(() => {
-          // Hide form, show success (in case they come back)
-          ctaForm.style.display = 'none';
-          ctaSuccess.classList.add('show');
-          
-          // Redirect
-          window.location.href = waURL;
-          
-          // Reset button text just in case
-          btn.classList.remove('loading');
-          btn.innerHTML = originalText;
-        }, 1500); // 1.5s delay
+      const originalText = ctaSubmitBtn.innerHTML;
+      
+      // Setup Loading State
+      ctaSubmitBtn.classList.add('loading');
+      ctaSubmitBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg> <span>Memproses permintaan Anda...</span>';
+      
+      // 1. Fire Pixel (Dummy)
+      if (typeof fbq === 'function') {
+        fbq('track', 'Lead');
+      }
+      
+      // 2. Prepare WA URL
+      const adminWA = "6281234567890"; // DUMMY NUMBER
+      const name = ctaForm.querySelector('input[name="name"]').value.trim();
+      const unit = ctaForm.querySelector('select[name="unit"]').value;
+      const message = `Halo Admin Blossom Park Residence 🏡\n\nPerkenalkan, saya *${name}*.\nSaya tertarik untuk mendapatkan informasi lengkap mengenai rumah *Tipe ${unit}* di Blossom Park Residence.\n\nMohon bantuannya untuk:\n✅ Pricelist terbaru\n✅ Jadwal survey lokasi\n✅ Info promo yang sedang berlaku\n\nTerima kasih 🙏`;
+      
+      const waURL = `https://wa.me/${adminWA}?text=${encodeURIComponent(message)}`;
+      
+      // 3. Delay & Redirect
+      setTimeout(() => {
+        ctaForm.style.display = 'none';
+        ctaSuccess.classList.add('show');
+        window.location.href = waURL;
+        ctaSubmitBtn.classList.remove('loading');
+        ctaSubmitBtn.innerHTML = originalText;
+      }, 1500);
     });
   }
 
