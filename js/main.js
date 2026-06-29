@@ -560,7 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
           btn.classList.remove('loading');
           btn.innerHTML = originalText;
         }, 1500); // 1.5s delay
-      }
     });
   }
 
